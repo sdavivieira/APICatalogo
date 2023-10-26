@@ -1,4 +1,5 @@
 using APICatalogo.Context;
+using APICatalogo.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -12,10 +13,12 @@ builder.Services.AddControllers().AddJsonOptions(options=>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
 string mySqlConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options=>
 options.UseMySql(mySqlConnection, ServerVersion.AutoDetect(mySqlConnection)));
+builder.Services.AddScoped<ProdutosRepository>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

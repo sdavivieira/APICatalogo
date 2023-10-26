@@ -1,5 +1,6 @@
 ﻿using APICatalogo.Context;
 using APICatalogo.Models;
+using APICatalogo.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -10,46 +11,56 @@ namespace APICatalogo.Controllers
     [ApiController]
     public class ProdutosController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ProdutosRepository _produtosRepositorio;
 
-        public ProdutosController(AppDbContext context)
+        public ProdutosController(ProdutosRepository produtosRepositorio)
         {
-            _context = context;
+            _produtosRepositorio = produtosRepositorio;
         }
 
+
         [HttpGet]
-        public ActionResult <IEnumerable<Produto>> Get()
+        public ActionResult<IEnumerable<Produto>> Get()
         {
-            var produtos = _context.Produtos.ToList();
-            if(produtos is null)
+            try
             {
-                return NotFound("Produtos não encontrados...");
+                var Produto = _produtosRepositorio.Get();
+                return Ok(Produto);
+
             }
-            return produtos;
+            catch
+            {
+                return BadRequest("Produtos não encontrados");
+            }
+
         }
         [HttpGet("{id:int}", Name = "ObterProduto")]
         public ActionResult<Produto> Get(int id)
         {
-            var produto = _context.Produtos.FirstOrDefault(p => p.ProdutoId == id);
-            if (produto is null)
+            try
             {
-                return NotFound("Produto não encontrado.");
+                var Produto = _produtosRepositorio.GetById(id);
+                return Ok(Produto);
             }
-            return produto;
+            catch
+            {
+                return BadRequest("Produto não encontrado");
+            }
         }
 
         [HttpPost]
         public ActionResult Post(Produto produto)
         {
-            if (produto is null)            
-                return BadRequest();
+            try
+            {
+                var Produto = _produtosRepositorio.AddProduto(produto);
+                return Ok(Produto);
+            }
+            catch
+            {
+                return BadRequest("Produto não adicionado");
+            }
 
-                _context.Produtos.Add(produto);
-                _context.SaveChanges();
-
-                return new CreatedAtRouteResult("ObterProduto",
-                 new { id = produto.ProdutoId }, produto);
-            
         }
 
         [HttpPut("{id:int}")]
@@ -57,33 +68,27 @@ namespace APICatalogo.Controllers
         {
             try
             {
-            if(id != produto.ProdutoId)
+                var Produto = _produtosRepositorio.PutProdutoById(id, produto);
+                return Ok(Produto);
+            }
+            catch (Exception e)
             {
-                return BadRequest("O ID não existe");
+                return BadRequest("API não pode executar essa operação");
             }
-                _context.Entry(produto).State = EntityState.Modified;
-                _context.SaveChanges();
-
-                return Ok(produto);
-
-            }
-            catch(Exception e)
-            {
-                return BadRequest("API não pode executar essa operação");   
-            }
-
         }
+
         [HttpDelete("{id:int}")]
-        public ActionResult Delete(int id)
+        public ActionResult<Produto> Delete(int id)
         {
-            var produto = _context.Produtos.FirstOrDefault(p => p.ProdutoId==id);
-            if (produto is null)
-                return NotFound("Produto não localizado...");
-
-            _context.Produtos.Remove(produto);
-            _context.SaveChanges();
-
-            return Ok(produto);
+            try
+            {
+                 _produtosRepositorio.DeleteProduto(id);
+            }
+            catch (Exception e)
+            {
+                return BadRequest("O produto não pode ser excluído");
+            }
+            return Ok();
         }
     }
 }
